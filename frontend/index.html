@@ -177,11 +177,12 @@
             };
 
             try {
-               const response = await fetch('https://ipl-win-predictor-ls97.onrender.com/predict', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(payload)
-                });
+             // Inside your index.html
+const response = await fetch('https://ipl-win-predictor-ls97.onrender.com/predict', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+});
                 const data = await response.json();
                 
                 resultBox.classList.remove('hidden', 'animate-pulse');
