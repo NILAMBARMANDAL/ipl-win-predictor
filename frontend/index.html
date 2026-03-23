@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPL Win Predictor Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); }
+    </style>
+</head>
+<body class="bg-slate-950 text-white min-h-screen flex items-center justify-center p-6">
+
+    <div class="glass p-8 rounded-3xl shadow-2xl w-full max-w-xl border border-slate-700/50">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-black text-yellow-500 uppercase tracking-tighter italic">IPL Predictor</h1>
+            <button onclick="resetForm()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded-full transition">Reset</button>
+        </div>
+        
+        <div class="space-y-5">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 mb-1 uppercase">Batting Team</label>
+                    <select id="bat_team" class="w-full bg-slate-800 border-none rounded-xl p-3 text-white focus:ring-2 focus:ring-yellow-500 appearance-none">
+                        <option>Mumbai Indians</option>
+                        <option>Chennai Super Kings</option>
+                        <option>Royal Challengers Bangalore</option>
+                        <option>Kolkata Knight Riders</option>
+                        <option>Kings XI Punjab</option>
+                        <option>Rajasthan Royals</option>
+                        <option>Delhi Capitals</option>
+                        <option>Sunrisers Hyderabad</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 mb-1 uppercase">Bowling Team</label>
+                    <select id="bowl_team" class="w-full bg-slate-800 border-none rounded-xl p-3 text-white focus:ring-2 focus:ring-yellow-500 appearance-none">
+                        <option>Chennai Super Kings</option>
+                        <option>Mumbai Indians</option>
+                        <option>Royal Challengers Bangalore</option>
+                        <option>Kolkata Knight Riders</option>
+                        <option>Kings XI Punjab</option>
+                        <option>Rajasthan Royals</option>
+                        <option>Delhi Capitals</option>
+                        <option>Sunrisers Hyderabad</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-400 mb-1 uppercase">Host City</label>
+                <select id="city" class="w-full bg-slate-800 border-none rounded-xl p-3 text-white focus:ring-2 focus:ring-yellow-500">
+                    <option>Mumbai</option><option>Bangalore</option><option>Hyderabad</option>
+                    <option>Kolkata</option><option>Delhi</option><option>Chennai</option>
+                    <option>Jaipur</option><option>Chandigarh</option><option>Ahmedabad</option>
+                    <option>Pune</option><option>Dharamsala</option><option>Visakhapatnam</option>
+                    <option>Abu Dhabi</option><option>Dubai</option><option>Sharjah</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 mb-1 uppercase">Target</label>
+                    <input type="number" id="target" placeholder="Target" class="w-full bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-yellow-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 mb-1 uppercase">Current Score</label>
+                    <input type="number" id="score" placeholder="Score" class="w-full bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-yellow-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 mb-1 uppercase">Overs (0-20)</label>
+                    <input type="number" id="overs" step="0.1" placeholder="e.g. 10.2" class="w-full bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-yellow-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 mb-1 uppercase">Wickets (0-9)</label>
+                    <input type="number" id="wickets" placeholder="Out" class="w-full bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-yellow-500">
+                </div>
+            </div>
+
+            <button onclick="sendData()" class="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-black py-4 rounded-xl transition-all transform active:scale-95 shadow-lg shadow-yellow-500/20">
+                ANALYZE CHANCES
+            </button>
+        </div>
+
+        <div id="result-box" class="hidden mt-8 p-6 bg-slate-900/50 rounded-2xl border border-slate-700 animate-pulse">
+            <div id="valid-result" class="flex justify-between items-center text-center">
+                <div class="flex-1">
+                    <p id="t1_name" class="text-[10px] text-slate-500 font-bold uppercase mb-1"></p>
+                    <p id="t1_prob" class="text-5xl font-black text-green-400">0%</p>
+                </div>
+                <div class="px-4 text-slate-600 font-black italic">VS</div>
+                <div class="flex-1">
+                    <p id="t2_name" class="text-[10px] text-slate-500 font-bold uppercase mb-1"></p>
+                    <p id="t2_prob" class="text-5xl font-black text-red-500">0%</p>
+                </div>
+            </div>
+            <p id="error-text" class="text-center text-red-400 font-bold hidden"></p>
+        </div>
+    </div>
+
+    <script>
+        function resetForm() {
+            window.location.reload();
+        }
+
+        async function sendData() {
+            const bat_team = document.getElementById('bat_team').value;
+            const bowl_team = document.getElementById('bowl_team').value;
+            const target = parseInt(document.getElementById('target').value);
+            const score = parseInt(document.getElementById('score').value);
+            const overs = parseFloat(document.getElementById('overs').value);
+            const wickets = parseInt(document.getElementById('wickets').value);
+            
+            const resultBox = document.getElementById('result-box');
+            const validDiv = document.getElementById('valid-result');
+            const errorText = document.getElementById('error-text');
+
+            // Helper to handle display
+            const displayError = (msg) => {
+                resultBox.classList.remove('hidden', 'animate-pulse');
+                validDiv.classList.add('hidden');
+                errorText.classList.remove('hidden');
+                errorText.innerText = msg;
+            };
+
+            // --- VALIDATION LOGIC ---
+
+            if (isNaN(target) || isNaN(score) || isNaN(overs) || isNaN(wickets)) {
+                return displayError("Please fill all fields! 🏏");
+            }
+
+            if (bat_team === bowl_team) {
+                return displayError("Both teams are the same! No battle... 🏏");
+            }
+
+            if (wickets < 0 || wickets >= 10) {
+                return displayError("Wickets must be between 0 and 9.");
+            }
+
+            if (overs < 0 || overs > 20) {
+                return displayError("Overs must be between 0.0 and 20.0.");
+            }
+
+            // Ball validation (e.g., cannot have 10.6, 10.7)
+            const overStr = overs.toString();
+            if (overStr.includes('.')) {
+                const balls = parseInt(overStr.split('.')[1]);
+                if (balls > 5 || overStr.split('.')[1].length > 1) {
+                    return displayError("Invalid Over! Use .1 to .5 (e.g., 15.3).");
+                }
+            }
+
+            // Win shortcut logic
+            if (score >= target) {
+                resultBox.classList.remove('hidden', 'animate-pulse');
+                validDiv.classList.remove('hidden');
+                errorText.classList.add('hidden');
+                document.getElementById('t1_name').innerText = bat_team;
+                document.getElementById('t1_prob').innerText = "100%";
+                document.getElementById('t2_name').innerText = bowl_team;
+                document.getElementById('t2_prob').innerText = "0%";
+                return;
+            }
+
+            // --- API CALL ---
+
+            const payload = {
+                batting_team: bat_team,
+                bowling_team: bowl_team,
+                city: document.getElementById('city').value,
+                target: target,
+                score: score,
+                overs: overs,
+                wickets: wickets
+            };
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/predict', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                
+                resultBox.classList.remove('hidden', 'animate-pulse');
+                validDiv.classList.remove('hidden');
+                errorText.classList.add('hidden');
+                document.getElementById('t1_name').innerText = bat_team;
+                document.getElementById('t1_prob').innerText = data.batting_win + "%";
+                document.getElementById('t2_name').innerText = bowl_team;
+                document.getElementById('t2_prob').innerText = data.bowling_win + "%";
+            } catch (e) {
+                displayError("Backend offline! Please run 'python main.py'");
+            }
+        }
+    </script>
+</body>
+</html>
