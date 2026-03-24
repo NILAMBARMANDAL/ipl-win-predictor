@@ -68,7 +68,7 @@ def predict(data: MatchInput):
         "batting_win": round(result[0][1] * 100),
         "bowling_win": round(result[0][0] * 100)
     }
-
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000)) 
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    import uvicorn
+    # Hugging Face MUST use port 7860
+    uvicorn.run(app, host="0.0.0.0", port=7860)
