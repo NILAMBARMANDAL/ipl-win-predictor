@@ -84,7 +84,7 @@
             </button>
         </div>
 
-        <div id="result-box" class="hidden mt-8 p-6 bg-slate-900/50 rounded-2xl border border-slate-700 animate-pulse">
+        <div id="result-box" class="hidden mt-8 p-6 bg-slate-900/50 rounded-2xl border border-slate-700">
             <div id="valid-result" class="flex justify-between items-center text-center">
                 <div class="flex-1">
                     <p id="t1_name" class="text-[10px] text-slate-500 font-bold uppercase mb-1"></p>
@@ -112,64 +112,37 @@
             const score = parseInt(document.getElementById('score').value);
             const overs = parseFloat(document.getElementById('overs').value);
             const wickets = parseInt(document.getElementById('wickets').value);
+            const city = document.getElementById('city').value;
             
             const resultBox = document.getElementById('result-box');
             const validDiv = document.getElementById('valid-result');
             const errorText = document.getElementById('error-text');
 
-            // Helper to handle display
+            // Reset UI states
+            resultBox.classList.add('hidden');
+            errorText.classList.add('hidden');
+            validDiv.classList.remove('hidden');
+
             const displayError = (msg) => {
-                resultBox.classList.remove('hidden', 'animate-pulse');
+                resultBox.classList.remove('hidden');
                 validDiv.classList.add('hidden');
                 errorText.classList.remove('hidden');
                 errorText.innerText = msg;
             };
 
-            // --- VALIDATION LOGIC ---
-
+            // --- VALIDATION ---
             if (isNaN(target) || isNaN(score) || isNaN(overs) || isNaN(wickets)) {
                 return displayError("Please fill all fields! 🏏");
             }
-
             if (bat_team === bowl_team) {
-                return displayError("Both teams are the same! No battle... 🏏");
+                return displayError("Both teams are the same! 🏏");
             }
 
-            if (wickets < 0 || wickets >= 10) {
-                return displayError("Wickets must be between 0 and 9.");
-            }
-
-            if (overs < 0 || overs > 20) {
-                return displayError("Overs must be between 0.0 and 20.0.");
-            }
-
-            // Ball validation (e.g., cannot have 10.6, 10.7)
-            const overStr = overs.toString();
-            if (overStr.includes('.')) {
-                const balls = parseInt(overStr.split('.')[1]);
-                if (balls > 5 || overStr.split('.')[1].length > 1) {
-                    return displayError("Invalid Over! Use .1 to .5 (e.g., 15.3).");
-                }
-            }
-
-            // Win shortcut logic
-            if (score >= target) {
-                resultBox.classList.remove('hidden', 'animate-pulse');
-                validDiv.classList.remove('hidden');
-                errorText.classList.add('hidden');
-                document.getElementById('t1_name').innerText = bat_team;
-                document.getElementById('t1_prob').innerText = "100%";
-                document.getElementById('t2_name').innerText = bowl_team;
-                document.getElementById('t2_prob').innerText = "0%";
-                return;
-            }
-
-            // --- API CALL ---
-
+            // --- API PAYLOAD ---
             const payload = {
                 batting_team: bat_team,
                 bowling_team: bowl_team,
-                city: document.getElementById('city').value,
+                city: city,
                 target: target,
                 score: score,
                 overs: overs,
@@ -177,23 +150,29 @@
             };
 
             try {
-             // Inside your index.html
-const response = await fetch('https://nilambar12-ipl-match-prediction.hf.space/predict', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-});
+                // Show a loading state
+                resultBox.classList.remove('hidden');
+                document.getElementById('t1_prob').innerText = "...";
+                document.getElementById('t2_prob').innerText = "...";
+
+                const response = await fetch('https://nilambar12-ipl-match-prediction.hf.space/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error("Backend is waking up or offline.");
+
                 const data = await response.json();
                 
-                resultBox.classList.remove('hidden', 'animate-pulse');
-                validDiv.classList.remove('hidden');
-                errorText.classList.add('hidden');
+                // Update UI with results
                 document.getElementById('t1_name').innerText = bat_team;
                 document.getElementById('t1_prob').innerText = data.batting_win + "%";
                 document.getElementById('t2_name').innerText = bowl_team;
                 document.getElementById('t2_prob').innerText = data.bowling_win + "%";
+
             } catch (e) {
-                displayError("Backend offline! Please run 'python main.py'");
+                displayError("Connection Error: Backend might be sleeping. Try again in 30 seconds!");
             }
         }
     </script>
